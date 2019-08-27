@@ -22,7 +22,8 @@ module.exports = function(directory, recursive, regExp) {
       return file.match(regExp || /\.(json|js)$/)
     })
     .map(function(file) {
-      return path.join('.', file.slice(basepath.length + 1))
+      let newBasePath = path.join(basepath, "..")
+      return "./" + path.join('.', file.slice(newBasePath.length + 1))
     })
 
   var context = function(key) {
@@ -30,7 +31,8 @@ module.exports = function(directory, recursive, regExp) {
   }
 
   context.resolve = function(key) {
-    return path.join(directory, key)
+    let fileName = path.basename(key)
+    return path.join(directory, fileName)
   }
 
   context.keys = function() {
