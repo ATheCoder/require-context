@@ -1,8 +1,8 @@
-module.exports = function(directory, recursive, regExp) {
-  var dir = require('node-dir')
-  var path = require('path')
-  var callsite = require('callsite')
+const { readdirSync } = require('fs');
+const path = require('path')
+const callsite = require('callsite')
 
+module.exports = function(directory, recursive, regExp) {
   // Assume absolute path by default
   var basepath = directory
 
@@ -16,17 +16,12 @@ module.exports = function(directory, recursive, regExp) {
     basepath = require.resolve(directory)
   }
 
-  var keys = dir
-    .files(basepath, {
-      sync: true,
-      recursive: recursive || false
-    })
+  var keys = getFiles(basepath)
     .filter(function(file) {
       return file.match(regExp || /\.(json|js)$/)
     })
     .map(function(file) {
-      let newBasePath = path.join(basepath, "..")
-      return "./" + path.join('.', file.slice(newBasePath.length + 1))
+      return "./" + path.join('.', file.slice(basepath.length + 1))
     })
 
   var context = function(key) {
@@ -34,8 +29,7 @@ module.exports = function(directory, recursive, regExp) {
   }
 
   context.resolve = function(key) {
-    let fileName = path.basename(key)
-    return path.join(directory, fileName)
+    return path.join(basepath, key)
   }
 
   context.keys = function() {
@@ -43,4 +37,14 @@ module.exports = function(directory, recursive, regExp) {
   }
 
   return context
+}
+
+
+function getFiles(dir) {
+  const dirents = readdirSync(dir, { withFileTypes: true });
+  const files = dirents.map((dirent) => {
+    const res = path.resolve(dir, dirent.name);
+    return dirent.isDirectory() ? getFiles(res) : res;
+  });
+  return Array.prototype.concat(...files);
 }
